@@ -1,4 +1,4 @@
-import MetaTrader5 as mt5, pandas as pd, talib as ta
+import MetaTrader5 as mt5, pandas as pd, talib as ta, os
 
 
 class Create_Candles_DataBase:
@@ -6,7 +6,6 @@ class Create_Candles_DataBase:
     def __init__(self):
         pass
         
-
     def init_conection_mt5(self):
         
         # Iniciando Conexão com MetaTrader5
@@ -16,6 +15,22 @@ class Create_Candles_DataBase:
         else:
             print("coneceted mt5!")
 
+    def delete_files(self):
+        
+        # Pegar o ultimo checkpoint salvo
+        caminhos = [
+            "../Database/Arquivo_Bruto/", 
+            "../Database/Arquivos_Por_Data/", 
+            "../Database/Arquivos_Por_Numero_Read_IA/"]
+
+        for caminho in caminhos:
+            lista_arquivos = os.listdir(caminho)
+            if(len(lista_arquivos) != 0):
+                for arquivo in lista_arquivos:
+                    os.remove(f'{caminho}{arquivo}')
+                    print(f' removido com sucesso {caminho}{arquivo}')
+                    
+   
 
     def add_indicators(self, candles):
         df = pd.DataFrame()
@@ -44,7 +59,7 @@ class Create_Candles_DataBase:
         hour = int(9)                        # o ativo WIN@ fica aberto aproximada 9horas por dia
         day_in_month = int(22)               # dias ativos dentro do mês 
         month_in_year = int(12)              # meses dentro do ano
-        years = 0.3 #int(1)                       # (EDITAVEL) caso queira aumentar a quantidade de anos do arquivo bruto
+        years = 0.5 #int(1)                       # (EDITAVEL) caso queira aumentar a quantidade de anos do arquivo bruto
 
         number_candles = int(hour * candles_in_hour * day_in_month * month_in_year * years)
         # print(number_candles)
@@ -111,8 +126,8 @@ class Create_Candles_DataBase:
             
             date_0 = "{}".format(candles["time"].iloc[i])[0:10]
             date_1 = "{}".format(candles["time"].iloc[i+1])[0:10]
-
-            if date_0 != date_1:
+                 
+            if ((date_0 != date_1) or (i == len(candles)-2)): 
                 print('\n') 
                 print("{} - {}".format(date_0,date_1))
 
@@ -141,12 +156,12 @@ class Create_Candles_DataBase:
 
 if __name__ == '__main__':
     
-    # Apenas para tratamento de dados
-    # ---------------------------------------------------
+    # # Apenas para tratamento de dados
+    # # ---------------------------------------------------
     ativo = "WIN@"
 
     candles = Create_Candles_DataBase()
+    candles.delete_files()
     candles.get_candles_in_mt5_SaveInPathDatabase(ativo)
-    # ---------------------------------------------------
+    # # ---------------------------------------------------
 
-    

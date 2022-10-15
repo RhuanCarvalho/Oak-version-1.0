@@ -11,12 +11,12 @@ import neat, pickle
 
 class BetterWinner:
 
-    def __init__(self):
+    def __init__(self, numero_generation):
 
-        self.better = self.init_better()
+        self.better = self.init_better(numero_generation)
 
 
-    def init_better(self):
+    def init_better(self, numero_generation):
 
 
         # get file config
@@ -24,7 +24,7 @@ class BetterWinner:
         config_file = os.path.join(this_file, '../config.txt')
 
         # Get Better Genoma Salvo
-        with open('Saves/Saves_Better_Winner/BetterWinner generation - 58.pkl', 'rb') as file:
+        with open(f'Saves/Saves_Better_Winner/BetterWinner generation - {numero_generation}.pkl', 'rb') as file:
             winner = pickle.load(file)
         
         # create config for neat

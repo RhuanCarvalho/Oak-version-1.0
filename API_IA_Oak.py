@@ -10,7 +10,9 @@ from Classes.DecisionApi import BetterWinner
 if __name__ =='__main__':
 
     app = Flask(__name__)
-    IA = BetterWinner()
+
+    # passar numero da geração que foi salva
+    IA = BetterWinner(58)
 
 
     @app.route('/apiOak', methods=["POST"])
