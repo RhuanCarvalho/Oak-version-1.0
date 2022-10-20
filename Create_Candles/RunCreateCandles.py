@@ -45,7 +45,7 @@ class Create_Candles_DataBase:
 
         return df
 
-    def get_candles_in_mt5_SaveInPathDatabase(self, ativo, period=mt5.TIMEFRAME_M2):
+    def get_candles_in_mt5_SaveInPathDatabase(self, ativo, qtdCandles, period=mt5.TIMEFRAME_M2):
 
 
         # SALVAR POR ARQUIVO BRUTO
@@ -59,7 +59,7 @@ class Create_Candles_DataBase:
         hour = int(9)                        # o ativo WIN@ fica aberto aproximada 9horas por dia
         day_in_month = int(22)               # dias ativos dentro do mês 
         month_in_year = int(12)              # meses dentro do ano
-        years = 0.5 #int(1)                       # (EDITAVEL) caso queira aumentar a quantidade de anos do arquivo bruto
+        years = qtdCandles #int(1)           # (EDITAVEL) caso queira aumentar a quantidade de anos do arquivo bruto
 
         number_candles = int(hour * candles_in_hour * day_in_month * month_in_year * years)
         # print(number_candles)
@@ -161,7 +161,9 @@ if __name__ == '__main__':
     ativo = "WIN@"
 
     candles = Create_Candles_DataBase()
+
+    qtdCandles = float(input("Digite a qtd de meses/ano que deseja: (0.1, 0.2 : decimais para meses e 1, 2: inteiros para anos)\n::::"))
     candles.delete_files()
-    candles.get_candles_in_mt5_SaveInPathDatabase(ativo)
+    candles.get_candles_in_mt5_SaveInPathDatabase(ativo, qtdCandles)
     # # ---------------------------------------------------
 

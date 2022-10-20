@@ -1,4 +1,6 @@
+import sys
 import neat, os, pandas as pd, requests
+from time import sleep as t
 from datetime import datetime, time
 
 
@@ -116,8 +118,10 @@ class Sub_Training:
                 })
 
     def score_diario(self):
+        print('\nAdd Score in Genomas :\n')
         self.porcentagem_media_atingida = []
         for i, hist in enumerate(self.history):
+            sys.stdout.write(f'\rcalculete: {((i*100)/len(self.history)):>2}%')
 
             porcent_dos_dias = [dia["porcent_trades_gain"] for dia in hist.history_dias]
 
@@ -185,6 +189,8 @@ class Sub_Training:
 
                 self.genomas[i].fitness += _fitness
 
+        print('\n')
+
     def reset_vars_intra_day(self):
         # Iniciar history / ESPECIFICO CAPITAL DIARIO
             for pessoa in self.pessoas:
@@ -234,6 +240,7 @@ class Sub_Training:
 
     def send_data_api(self):
 
+        print('\nEnviando Dias para Api:')
         #----------------------------------
         # Create Dias
         #----------------------------------
@@ -242,6 +249,7 @@ class Sub_Training:
             id_dia = (requests.post(self.url_dia, json={
                 "dia": datetime.strptime(dia.time[j][:10], "%Y-%m-%d").timestamp()
                 })).json()
+            t(0.0000002)
             if id_dia != -1:
                 for i in range(len(dia)):
                     candle = {
@@ -253,7 +261,8 @@ class Sub_Training:
                         "id_dia": id_dia
                     }
                     requests.post(self.url_candles,json=candle)
-        
+                    t(0.0000002)
+        print('Enviado!')
         #----------------------------------
         # Create Generation
         #----------------------------------
@@ -265,6 +274,7 @@ class Sub_Training:
         }
 
         id_generation = (requests.post(self.url_generation, json=_generation)).json()
+        t(0.0000002)
 
 
         # Passar apenas 10 melhores genomas para API
@@ -275,6 +285,7 @@ class Sub_Training:
         lista_fitness_e_index.sort(reverse=True)
         list_10_melhores = lista_fitness_e_index[:10]
 
+        print('\nEnviando 10 melhores Genomas para Api:')
         for _, i in list_10_melhores:
 
             totalValue = sum([result_days['resultado_diario_valor'] for result_days in self.history[i].history_dias])
@@ -297,16 +308,19 @@ class Sub_Training:
                 }
             
             id_genoma = (requests.post(self.url_genoma, json= _genoma)).json()
+            t(0.0000002)
 
             for training in self.history[i].history_dias:
                 training.update({"id_genoma": id_genoma})
 
                 id_training = (requests.post(self.url_training, json=training)).json()
+                t(0.0000002)
 
                 for history in training['history_trades']:
                     history.update({"id_training":id_training})
                     id_historytrades = (requests.post(self.url_historytrades, json=history)).json()
 
     def finish_and_save(self):
+        print('\nCriando Melhor Genoma!')
         #salvando o genoma com melhor pontuação
         self.genomas[get_index(self.genomas,0)].fitness = 1001

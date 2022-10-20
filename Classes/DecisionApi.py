@@ -23,8 +23,11 @@ class BetterWinner:
         this_file = os.path.dirname(__file__)
         config_file = os.path.join(this_file, '../config.txt')
 
+        name_file = f'Saves/Saves_Better_Winner/BetterWinner generation - {numero_generation}.pkl'
+        print(f'Usando arquivo: {name_file}')
+
         # Get Better Genoma Salvo
-        with open(f'Saves/Saves_Better_Winner/BetterWinner generation - {numero_generation}.pkl', 'rb') as file:
+        with open(name_file, 'rb') as file:
             winner = pickle.load(file)
         
         # create config for neat

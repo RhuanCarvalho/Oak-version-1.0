@@ -12,7 +12,8 @@ if __name__ =='__main__':
     app = Flask(__name__)
 
     # passar numero da geração que foi salva
-    IA = BetterWinner(58)
+    id_generation = int(input("Digite o ID da Generation\n::::"))
+    IA = BetterWinner(id_generation)
 
 
     @app.route('/apiOak', methods=["POST"])
