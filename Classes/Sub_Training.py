@@ -247,7 +247,7 @@ class Sub_Training:
         for j in self.dias_para_enviar_api:
             dia = self.dias[j]
             id_dia = (requests.post(self.url_dia, json={
-                "dia": datetime.strptime(dia.time[j][:10], "%Y-%m-%d").timestamp()
+                "dia": datetime.strptime(dia.time[0][:10], "%Y-%m-%d").timestamp()
                 })).json()
             t(0.0000002)
             if id_dia != -1:
