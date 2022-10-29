@@ -1,3 +1,5 @@
+import pprint
+
 import pickle
 import neat, os, pandas as pd, requests
 from time import sleep as t
@@ -14,6 +16,8 @@ inputs_IA
 class Sub_TestGenoma:
 
     def __init__(self):
+
+        self.pp = pprint.PrettyPrinter(indent=4)
 
         self.pessoa = Pessoa()
         self.history = History()
@@ -48,7 +52,7 @@ class Sub_TestGenoma:
         self.dias_para_enviar_api = []
         self.candles = []
 
-        self.hourMinute_init    = time(hour=9,minute=0)  # horário de inicio 09:00
+        self.hourMinute_init    = time(hour=9,minute=18)  # horário de inicio 09:00
         self.hourMinute_end     = time(hour=14,minute=0) # horário de fim 12:00 
 
     def create_days(self):
@@ -145,7 +149,14 @@ class Sub_TestGenoma:
             config_file
         )
 
-        return neat.nn.FeedForwardNetwork.create(winner, config)
+        rede = neat.nn.FeedForwardNetwork.create(winner, config)
+
+        print('\n\nWinner Genoma\n\n')
+        self.pp.pprint(vars(winner))
+        print('\n\nRede Neural\n\n')
+        self.pp.pprint(vars(rede))
+
+        return rede
 
     def decision_rede(self, candles, min_size):
 
@@ -154,7 +165,12 @@ class Sub_TestGenoma:
         output = self.rede.activate(inputs_Better)
 
         decision = output.index(max(output))
-        
+
+        # #Salvar Candles para verificação
+        # hour_ = str(candles.iloc[-1].time).replace(":", ".")
+        # trade_ = 'BUY' if decision == 0 else 'SELL'
+        # candles.to_csv(f'entradasOakTest/trade - {hour_} - {trade_}.csv', index=False)
+
         return decision
 
     def send_api(self):

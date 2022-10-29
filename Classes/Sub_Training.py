@@ -7,7 +7,6 @@ from datetime import datetime, time
 from Classes.Pessoas                        import Pessoa
 from Classes.History                        import History
 from Classes.Auxiliar                       import (
-calculete_body_for_RuleColor,
 get_index
 )
 
@@ -47,7 +46,7 @@ class Sub_Training:
         self.dias_para_enviar_api = []
         self.candles = []
 
-        self.hourMinute_init    = time(hour=9,minute=0)  # horário de inicio 09:00
+        self.hourMinute_init    = time(hour=9,minute=18)  # horário de inicio 09:00
         self.hourMinute_end     = time(hour=14,minute=0) # horário de fim 12:00 
 
     def create_days(self):
@@ -198,39 +197,6 @@ class Sub_Training:
                 pessoa.diario_stop = 0
                 pessoa.diario_gain = 0 
     
-    def load_RuleColor(self, candles):
-        '''
-            calcula a força do candle atual em relação ao três ultimos:
-            - CANDLE FORTE: cujo corpo maior que o corpo dos 3 ultimos
-            - CANDLE SUPER FORTE: cujo coropo maior que o tamanho da minima e maxima dos 3 ultimos
-
-            Retorno Booleano (True or False)
-        '''
-        candles = pd.DataFrame(candles).reset_index(drop=True)  
-
-        candles = pd.DataFrame(calculete_body_for_RuleColor(candles))
-
-        
-        # Todos candles fortes precisam ser maior que o candle minimo
-        if  (candles.body_size.iloc[-1] > self.min_size_candle):
-            # calcular CANDLE SUPER FORTE
-            if(
-                candles.body_size.iloc[-1] > candles.body_size_plus.iloc[-2] and
-                candles.body_size.iloc[-1] > candles.body_size_plus.iloc[-3] and
-                candles.body_size.iloc[-1] > candles.body_size_plus.iloc[-4] 
-                ):
-                return True
-            # calcular CANDLE FORTE
-            if(
-                candles.body_size.iloc[-1] > candles.body_size.iloc[-2] and
-                candles.body_size.iloc[-1] > candles.body_size.iloc[-3] and
-                candles.body_size.iloc[-1] > candles.body_size.iloc[-4] 
-                ):
-                return True
-        
-    
-        # Retorna False para caso não encaixe no padrão
-        return False
 
     def send_api(self):
         try:

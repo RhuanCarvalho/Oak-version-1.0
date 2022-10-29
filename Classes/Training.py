@@ -5,7 +5,8 @@ from Classes.Custom_NEAT        import Custom_NEAT
 from Classes.Sub_Training       import Sub_Training
 from Classes.Auxiliar           import (
 verify_hourInit_hourEnd,
-inputs_IA
+inputs_IA,
+load_RuleColor
 )
 
 
@@ -50,8 +51,8 @@ class Training(Sub_Training):
                 # add entrada por horario
                 range_RuleColor_init = j
                 range_RuleColor_end = j + 4
-                range_InputsIA_init = (j-1)
-                range_InputsIA_end = (j-1) + 10
+                range_InputsIA_init = (j-6)
+                range_InputsIA_end = (j-6) + 10
 
                 # para que que o indice inicial em inputs IA não seja negativo
                 if (range_InputsIA_init < 0):
@@ -61,7 +62,7 @@ class Training(Sub_Training):
                 if(verify_hourInit_hourEnd(self.candles.iloc[range_RuleColor_end - 1], self.hourMinute_init, self.hourMinute_end)):
 
                     # codigo de Buy or Sell só sera ativado se a regra de coloração for ativada
-                    if (self.load_RuleColor(self.candles[range_RuleColor_init:range_RuleColor_end])):
+                    if (load_RuleColor(self.candles[range_RuleColor_init:range_RuleColor_end], self.min_size_candle)):
 
                         # criando inputs para IA de acordo com o padrão
                         input_IA = inputs_IA(self.candles[range_InputsIA_init:range_InputsIA_end], self.min_size_candle)

@@ -1,10 +1,8 @@
-import sys
 from Classes.Decorators         import calcule_time_function
 
 from Classes.Sub_TestGenoma       import Sub_TestGenoma
 from Classes.Auxiliar           import (
-verify_hourInit_hourEnd,
-inputs_IA
+verify_hourInit_hourEnd
 )
 
 
@@ -30,8 +28,8 @@ class TrainingTestGenoma(Sub_TestGenoma):
             # add entrada por horario
             range_RuleColor_init = j
             range_RuleColor_end = j + 4
-            range_InputsIA_init = (j-1)
-            range_InputsIA_end = (j-1) + 10
+            range_InputsIA_init = (j-6)
+            range_InputsIA_end = (j-6) + 10
 
             # para que que o indice inicial em inputs IA não seja negativo
             if (range_InputsIA_init < 0):

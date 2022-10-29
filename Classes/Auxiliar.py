@@ -9,7 +9,10 @@ def create_model_candles(candles_bruto):
     candles = pd.DataFrame(candles_bruto)
     candles["time"] = pd.to_datetime(candles["time"], unit='s')
 
-    # print(candles)
+    candles['volume'] = candles['real_volume']
+
+    # Retirando colunas que não serão usadas
+    candles = candles.drop(columns=["tick_volume","spread","real_volume"])
 
     upper, middle, lower = [],[],[]
         
@@ -22,6 +25,38 @@ def create_model_candles(candles_bruto):
 
     return candles[-10:]
 
+def load_RuleColor(candles, min_size_candle):
+    '''
+        calcula a força do candle atual em relação ao três ultimos:
+        - CANDLE FORTE: cujo corpo maior que o corpo dos 3 ultimos
+        - CANDLE SUPER FORTE: cujo coropo maior que o tamanho da minima e maxima dos 3 ultimos
+
+        Retorno Booleano (True or False)
+    '''
+    candles = pd.DataFrame(candles).reset_index(drop=True)  
+
+    candles = pd.DataFrame(calculete_body_for_RuleColor(candles))
+
+    
+    # Todos candles fortes precisam ser maior que o candle minimo
+    if  (candles.body_size.iloc[-1] > min_size_candle):
+        # calcular CANDLE SUPER FORTE
+        if(
+            candles.body_size.iloc[-1] > candles.body_size_plus.iloc[-2] and
+            candles.body_size.iloc[-1] > candles.body_size_plus.iloc[-3] and
+            candles.body_size.iloc[-1] > candles.body_size_plus.iloc[-4] 
+            ):
+            return True
+        # calcular CANDLE FORTE
+        if(
+            candles.body_size.iloc[-1] > candles.body_size.iloc[-2] and
+            candles.body_size.iloc[-1] > candles.body_size.iloc[-3] and
+            candles.body_size.iloc[-1] > candles.body_size.iloc[-4] 
+            ):
+            return True
+    
+    # Retorna False para caso não encaixe no padrão
+    return False
      
 def calculete_valor_finaceiro_trade( size_in_pts, result, num_contratos, valor_max_trade):
     
@@ -98,6 +133,16 @@ def calculete_size_gain_stop(candle_, order, marge_stop, stop_max):
 def verify_hourInit_hourEnd( candle_verify,hourMinute_init, hourMinute_end):
     hour_candle = int(candle_verify.time[10:13])
     minute_candle = int(candle_verify.time[14:16])
+    time_candle = time(hour=hour_candle,minute=minute_candle)
+
+    if ( time_candle >= hourMinute_init and time_candle < hourMinute_end):
+        return True
+    else:
+        return False
+
+def verify_hourInit_hourEnd_real_Oak( candle_verify, hourMinute_init, hourMinute_end):
+    hour_candle = int(candle_verify[10:13])
+    minute_candle = int(candle_verify[14:16])
     time_candle = time(hour=hour_candle,minute=minute_candle)
 
     if ( time_candle >= hourMinute_init and time_candle < hourMinute_end):
@@ -430,5 +475,5 @@ def inputs_IA(candles, min_size_candle):
         left_index=True, 
         how='outer')
 
-    
+
     return create_inputs_IA(candles, range_total, range_positive, range_negative)
