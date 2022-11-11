@@ -43,8 +43,8 @@ class Oak:
         this_file = os.path.dirname(__file__)
         config_file = os.path.join(this_file, '../config.txt')
 
-        name_file = f'Saves/Saves_Better_Winner/BetterWinner generation - {numero_generation}.pkl'
-        print(f'Usando arquivo: {name_file}')
+        name_file = f'Saves/Saves_All_BetterGenomas_AllGenerations/BetterWinner generation - {numero_generation}.pkl'
+        print(f'Usando arquivo: {name_file}\n')
 
         # Get Better Genoma Salvo
         with open(name_file, 'rb') as file:
@@ -131,7 +131,7 @@ class Oak:
 
             if self.fixe_date != time_last_candle:
                 self.fixe_date = time_last_candle
-                print(f'close new candle : {time_last_candle}')
+                print(f'\nclose new candle : {time_last_candle}\n')
                 break
             else:
                 current_time = (datetime.now()).strftime('%H:%M:%S')

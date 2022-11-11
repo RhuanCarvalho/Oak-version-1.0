@@ -56,9 +56,12 @@ class Sub_TestGenoma:
         self.hourMinute_end     = time(hour=14,minute=0) # horário de fim 12:00 
 
     def create_days(self):
+        caminho = 'Database/Arquivos_Por_Data'
+        lista_arquivos = os.listdir(caminho)
+
         self.dias = list([pd.DataFrame(
-            pd.read_csv(f'Database/Arquivos_Por_Numero_Read_IA/{str(i)}.csv')
-                ) for i in range(self.total_candles_para_treinamento)])
+            pd.read_csv(f'Database/Arquivos_Por_Data/{str(file)}')
+                ) for file in lista_arquivos])
         self.dias.reverse()
           
     def select_day(self): 
@@ -133,8 +136,8 @@ class Sub_TestGenoma:
         this_file = os.path.dirname(__file__)
         config_file = os.path.join(this_file, '../config.txt')
 
-        name_file = f'Saves/Saves_Better_Winner/BetterWinner generation - {numero_generation}.pkl'
-        print(f'Usando arquivo: {name_file}')
+        name_file = f'Saves/Saves_All_BetterGenomas_AllGenerations/BetterWinner generation - {numero_generation}.pkl'
+        print(f'Usando arquivo: {name_file}\n')
 
         # Get Better Genoma Salvo
         with open(name_file, 'rb') as file:
@@ -151,10 +154,10 @@ class Sub_TestGenoma:
 
         rede = neat.nn.FeedForwardNetwork.create(winner, config)
 
-        print('\n\nWinner Genoma\n\n')
-        self.pp.pprint(vars(winner))
-        print('\n\nRede Neural\n\n')
-        self.pp.pprint(vars(rede))
+        # print('\n\nWinner Genoma\n\n')
+        # self.pp.pprint(vars(winner))
+        # print('\n\nRede Neural\n\n')
+        # self.pp.pprint(vars(rede))
 
         return rede
 
@@ -177,11 +180,11 @@ class Sub_TestGenoma:
         try:
             self.send_data_api()
         except Exception as err:
-            print(f'Houve o seguinte erro ao tentar fazer o envio dos dados para API: {err}')
+            print(f'Houve o seguinte erro ao tentar fazer o envio dos dados para API: {err}\n')
 
     def send_data_api(self):
 
-        print('\nEnviando Dias para Api:')
+        print('Enviando Dias para Api:\n')
         #----------------------------------
         # Create Dia
         #----------------------------------
@@ -202,7 +205,7 @@ class Sub_TestGenoma:
                 }
                 requests.post(self.url_candles,json=candle)
                 t(0.0000002)
-        print('Enviado!')
+        print('Enviado!\n')
 
         #----------------------------------
         # Create Training Test

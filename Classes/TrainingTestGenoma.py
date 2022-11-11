@@ -1,6 +1,8 @@
 from Classes.Decorators         import calcule_time_function
 
 from Classes.Sub_TestGenoma       import Sub_TestGenoma
+from Classes.Pessoas            import buy_dict, sell_dict
+
 from Classes.Auxiliar           import (
 verify_hourInit_hourEnd
 )
@@ -17,7 +19,7 @@ class TrainingTestGenoma(Sub_TestGenoma):
 
     @calcule_time_function
     def fitness_function_Oak(self):
-        print('Iniciando Teste')
+        print('Iniciando Teste\n')
 
         self.select_day()
 
@@ -46,18 +48,19 @@ class TrainingTestGenoma(Sub_TestGenoma):
 
                     # Tomadas de Decisão   BUY / SELL / NOT_ACTION
                     if action == 0: # BUY
-                        self.pessoa.buy(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:])
+                        buy_sl_or_gn, buy_trade_dict = buy_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
+                        self.pessoa.add_trade(buy_sl_or_gn, buy_trade_dict)
                                                         
                     if action == 1: #  SELL 
-                        self.pessoa.sell(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:])                               
+                        sell_sl_or_gn, sell_trade_dict = sell_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
+                        self.pessoa.add_trade(sell_sl_or_gn, sell_trade_dict)                               
 
         
         self.add_data_in_history_diario(self.candles.iloc[0].time[:10])
 
         self.send_api()
 
-        print('\nFim Teste')
-        print('\n')
+        print('Fim Teste\n')
 
     def start(self):
         self.fitness_function_Oak()

@@ -15,20 +15,29 @@ class Create_Candles_DataBase:
         else:
             print("coneceted mt5!")
 
-    def delete_files(self):
+    def delete_files(self, selectForPaths):
         
         # Pegar o ultimo checkpoint salvo
-        caminhos = [
-            "../Database/Arquivo_Bruto/", 
-            "../Database/Arquivos_Por_Data/", 
-            "../Database/Arquivos_Por_Numero_Read_IA/"]
+        if (selectForPaths==1): 
+            caminhos = [
+                "../Database/Arquivo_Bruto/", 
+                "../Database/Arquivos_Por_Data/"]
+        if (selectForPaths==2): 
+            caminhos = [
+                "../Database/Arquivo_Bruto/", 
+                "../Database/Arquivos_Por_Numero_Read_IA/"]
+        if (selectForPaths==0): 
+            caminhos = [
+                "../Database/Arquivo_Bruto/", 
+                "../Database/Arquivos_Por_Data/", 
+                "../Database/Arquivos_Por_Numero_Read_IA/"]
 
         for caminho in caminhos:
             lista_arquivos = os.listdir(caminho)
             if(len(lista_arquivos) != 0):
-                for arquivo in lista_arquivos:
-                    os.remove(f'{caminho}{arquivo}')
-                    print(f' removido com sucesso {caminho}{arquivo}')
+                    for arquivo in lista_arquivos:
+                        os.remove(f'{caminho}{arquivo}')
+                        print(f' removido com sucesso {caminho}{arquivo}')
                     
    
 
@@ -45,7 +54,7 @@ class Create_Candles_DataBase:
 
         return df
 
-    def get_candles_in_mt5_SaveInPathDatabase(self, ativo, qtdCandles, period=mt5.TIMEFRAME_M2):
+    def get_candles_in_mt5_SaveInPathDatabase(self, ativo, qtdCandles, selectForPaths,period=mt5.TIMEFRAME_M2):
 
 
         # SALVAR POR ARQUIVO BRUTO
@@ -122,6 +131,7 @@ class Create_Candles_DataBase:
         count_saves = 0
 
         # salvar separados por data(dia) e por numeração para leitura IA
+        dias = []
         for i in range(len(candles)-1):
             
             date_0 = "{}".format(candles["time"].iloc[i])[0:10]
@@ -140,17 +150,25 @@ class Create_Candles_DataBase:
                 # salvando CSV por DATA(dia)
                 name_file = "{}.csv".format(date_0)
                 path_file = "../Database/Arquivos_Por_Data/{}".format(name_file)
-                candles_modified.to_csv(path_file, index=False)
-                print('{} Salvo com sucesso!'.format(name_file))
+                if (selectForPaths==1 or selectForPaths==0):
+                    candles_modified.to_csv(path_file, index=False)
+                    print('{} Salvo com sucesso!'.format(name_file))
 
-                # salvando CSV por Numero para leitura IA
-                name_file = "{}.csv".format(count_saves)
-                path_file = "../Database/Arquivos_Por_Numero_Read_IA/{}".format(name_file)
-                candles_modified.to_csv(path_file, index=False)
-                print('{} Salvo com sucesso!'.format(name_file))
+                dias.append(candles_modified)
+
 
                 count_saves += 1
-        print('\n\n')
+        
+
+        dias.reverse()
+        for i, dia in enumerate(dias):
+            # salvando CSV por Numero para leitura IA
+            if (selectForPaths==2 or selectForPaths==0):
+                name_file = "{}.csv".format(i)
+                path_file = "../Database/Arquivos_Por_Numero_Read_IA/{}".format(name_file)
+                dia.to_csv(path_file, index=False)
+                print('{} Salvo com sucesso!'.format(name_file))
+            
 
 
 
@@ -163,7 +181,8 @@ if __name__ == '__main__':
     candles = Create_Candles_DataBase()
 
     qtdCandles = float(input("Digite a qtd de meses/ano que deseja: (0.1, 0.2 : decimais para meses e 1, 2: inteiros para anos)\n::::"))
-    candles.delete_files()
-    candles.get_candles_in_mt5_SaveInPathDatabase(ativo, qtdCandles)
+    selectForPaths = float(input("Digite:\n 0 - para as duas Pastas( Arquivos_Por_Data e Arquivos_Por_Numero_Read_IA)\n 1 - para apenas Arquivos_Por_Data\n 2 - para apenas Arquivos_Por_Numero_Read_IA \n::::"))
+    candles.delete_files(selectForPaths)
+    candles.get_candles_in_mt5_SaveInPathDatabase(ativo, qtdCandles, selectForPaths)
     # # ---------------------------------------------------
 

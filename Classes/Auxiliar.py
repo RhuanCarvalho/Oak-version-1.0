@@ -1,8 +1,13 @@
 import pandas as pd, talib as ta
 from datetime import time
+from numba import jit
 
 from statistics import median_high
 
+@jit(nopython=True, cache=True)
+def calcule_porcent(valor_atual, valor_total):
+    porcent_ = round((valor_atual*100)/(valor_total-1),2)
+    return porcent_
 
 def create_model_candles(candles_bruto):
 
@@ -58,6 +63,7 @@ def load_RuleColor(candles, min_size_candle):
     # Retorna False para caso não encaixe no padrão
     return False
      
+@jit(nopython=True, cache=True)
 def calculete_valor_finaceiro_trade( size_in_pts, result, num_contratos, valor_max_trade):
     
     valor = size_in_pts * 0.20 * num_contratos 
@@ -130,7 +136,7 @@ def calculete_size_gain_stop(candle_, order, marge_stop, stop_max):
 
     return size_Gain, size_Stop, stop, gain
 
-def verify_hourInit_hourEnd( candle_verify,hourMinute_init, hourMinute_end):
+def verify_hourInit_hourEnd( candle_verify, hourMinute_init, hourMinute_end):
     hour_candle = int(candle_verify.time[10:13])
     minute_candle = int(candle_verify.time[14:16])
     time_candle = time(hour=hour_candle,minute=minute_candle)
@@ -139,6 +145,7 @@ def verify_hourInit_hourEnd( candle_verify,hourMinute_init, hourMinute_end):
         return True
     else:
         return False
+
 
 def verify_hourInit_hourEnd_real_Oak( candle_verify, hourMinute_init, hourMinute_end):
     hour_candle = int(candle_verify[10:13])
@@ -150,19 +157,12 @@ def verify_hourInit_hourEnd_real_Oak( candle_verify, hourMinute_init, hourMinute
     else:
         return False
 
-def calculete_body_for_RuleColor( candles):
+def calculete_body_for_RuleColor(candles):
     
     data = pd.DataFrame()
 
-    body_size, body_size_plus = [], []
-
-    for i in range(len(candles)):     
-
-        body_size.append(abs(candles.open[i] - candles.close[i]))
-        body_size_plus.append(abs(candles.low[i] - candles.high[i]))
-
-    data['body_size'] = body_size
-    data['body_size_plus'] = body_size_plus
+    data['body_size'] = list(abs(o - c) for o, c in zip(candles.open, candles.close))
+    data['body_size_plus'] = list(abs(l - h) for l, h in zip(candles.low,candles.high))
     
     return data
 
@@ -174,9 +174,7 @@ def get_index(list_genomas, get_what_index):
     '''
 
     # Add lista Fitness para array
-    list_fitness = []
-    for i in range(len(list_genomas)):
-        list_fitness.append(list_genomas[i].fitness)
+    list_fitness = list(ge.fitness for ge in list_genomas)
 
     better_indice = list_fitness.index(max(list_fitness))
     median_indice = list_fitness.index(median_high(list_fitness))
@@ -187,21 +185,14 @@ def get_index(list_genomas, get_what_index):
     if ( get_what_index == 0 ):
         return better_indice
 
-def calculete_point_in_box( candles, main_point):
+def calculete_point_in_box(candles, main_point):
 
     data = pd.DataFrame()
-    open,high,low,close = [],[],[],[]
 
-    for i in range(len(candles)):     
-        open.append(int(candles.open[i] - main_point))
-        high.append(int(candles.high[i] - main_point))
-        low.append(int(candles.low[i] - main_point))
-        close.append(int(candles.close[i] - main_point))
-
-    data['open_point_inBox'] = open
-    data['high_point_inBox'] = high
-    data['low_point_inBox'] = low
-    data['close_point_inBox'] = close
+    data['open_point_inBox']  = list(int(o - main_point) for o in candles.open )
+    data['high_point_inBox']  = list(int(h - main_point) for h in candles.high )
+    data['low_point_inBox']   = list(int(l - main_point) for l in candles.low  )
+    data['close_point_inBox'] = list(int(c - main_point) for c in candles.close)
 
     return data
 
@@ -218,113 +209,89 @@ def calculete_porcentVolumeRefFirst(candles):
 
     data['PorcentVolumeRefFirst'] = porcentVolumeRefFirst
     
-    # print(data)
     return data
 
 def calculete_distance_CloseCandle_CloseBandasBollinger(candles, weight_porcent):
     data = pd.DataFrame()
-    closeRelativeBandsUpper = []
-    closeRelativeBandsLower = []
-    closeRelativeBandsSizeDistance = []
+    @jit(nopython=True, cache=True)
+    def map_calcule(valor1, valor2):
+        return int(round((100 - ((valor1*100)/valor2) ) * weight_porcent)) 
 
-    for i in range(len(candles)):
-        value_porcent_BandsUpper = (candles.close[i] * 100 ) / candles.upperBB[i]
-        closeRelativeBandsUpper.append(int(round(100-value_porcent_BandsUpper)*weight_porcent))                
-
-        value_porcent_BandsLower = (candles.close[i] * 100 ) / candles.lowerBB[i]
-        closeRelativeBandsLower.append(int(round(100-value_porcent_BandsLower)*weight_porcent))                
-
-        sizeDistanceBands_porcent = (candles.upperBB[i] * 100 ) / candles.lowerBB[i]
-        closeRelativeBandsSizeDistance.append(int(round(100-sizeDistanceBands_porcent)*weight_porcent))
-        
-    
-    data['CloseRelativeBandsUpper'] = closeRelativeBandsUpper
-    data['CloseRelativeBandsLower'] = closeRelativeBandsLower
-    data['CloseRelativeBandsSizeDistance'] = closeRelativeBandsSizeDistance
+    data['CloseRelativeBandsUpper']         = list(map(map_calcule, candles.close, candles.upperBB)) 
+    data['CloseRelativeBandsLower']         = list(map(map_calcule, candles.close, candles.lowerBB))
+    data['CloseRelativeBandsSizeDistance']  = list(map(map_calcule, candles.upperBB, candles.lowerBB))
 
     return data
 
-def calculete_distance_CloseCandle_CloseMedias_9_20_50_200( candles, weight_porcent):
+def calculete_distance_CloseCandle_CloseMedias_9_20_50_200(candles, weight_porcent):
     data = pd.DataFrame()
-    closeRelativeMedia9 = []
-    closeRelativeMedia20 = []
-    closeRelativeMedia50 = []
-    closeRelativeMedia200 = []
+    @jit(nopython=True, cache=True)
+    def map_calcule(valor1, valor2):
+      return int(round((100 - ((valor1*100)/valor2) ) * weight_porcent)) 
 
-    for i in range(len(candles)):
-        value_porcent9 = (candles.close[i] * 100) / candles.media9[i]
-        closeRelativeMedia9.append(int(round((100-value_porcent9)*weight_porcent)))
-
-        value_porcent20 = (candles.close[i] * 100) / candles.media20[i]
-        closeRelativeMedia20.append(int(round((100-value_porcent20)*weight_porcent)))
-
-        value_porcent50 = (candles.close[i] * 100) / candles.media50[i]
-        closeRelativeMedia50.append(int(round((100-value_porcent50)*weight_porcent)))
-
-        value_porcent200 = (candles.close[i] * 100) / candles.media200[i]
-        closeRelativeMedia200.append(int(round((100-value_porcent200)*weight_porcent)))
-
-    data['CloseRelativeMedia9'] = closeRelativeMedia9
-    data['CloseRelativeMedia20'] = closeRelativeMedia20
-    data['CloseRelativeMedia50'] = closeRelativeMedia50
-    data['CloseRelativeMedia200'] = closeRelativeMedia200
+    data['CloseRelativeMedia9']   = list(map(map_calcule, candles.close,candles.media9))
+    data['CloseRelativeMedia20']  = list(map(map_calcule, candles.close,candles.media20))
+    data['CloseRelativeMedia50']  = list(map(map_calcule, candles.close,candles.media50))
+    data['CloseRelativeMedia200'] = list(map(map_calcule, candles.close,candles.media200))
 
     return data
 
 def calculete_paramsDefaultCandle(candles, min_size_candle, range_total):
 
     data = pd.DataFrame()
+
+    @jit(nopython=True, cache=True)
+    def map_porcent_min_size_candle(valor):
+        return int(round(((valor) * 100) / min_size_candle))
+
+    @jit(nopython=True, cache=True)
+    def map_porcent_range_total(valor):
+        return int(round(((valor) * 100) / range_total))
+
+    @jit(nopython=True, cache=True)
+    def porcent_body_sup_inf(valor1, valor2):
+        return (round(((valor1)*100)/(valor2))) if (valor1 != 0) else(0)
     
-    size_total = []
-    size_relative_size_min = []
-    size_relative_range_total = []
-    pos_or_neg = []
-    pts_pavio_superior = []
-    porcent_pavio_superior = []
-    pts_Body = []
-    porcent_Body = []
-    pts_pavio_inferior = []
-    porcent_pavio_inferior = []
+    # pts Pavio Superior
+    @jit(nopython=True, cache=True)
+    def pts_pavio_superior(open, close, high, pos_or_neg):
+        return int((high - close)if(pos_or_neg == 1)else(high - open))
 
-    for i in range(len(candles)):
+    # pts Corpo Candle
+    @jit(nopython=True, cache=True)
+    def pts_Body(open, close):
+        return int(abs(open - close))
 
-        # -- Passar padrão candle
+    # pts Pavio Inferior
+    @jit(nopython=True, cache=True)
+    def pts_pavio_inferior(open, close, low, pos_or_neg):
+        return int((open - low)if(pos_or_neg == 1)else(close - low))
+
+
+    # -- Passar padrão candle
         # tamanho total Candle (high -low)
-        size_total.append(candles.high[i] - candles.low[i])
+    data['size_total']                =  list(int(high - low) for high, low in zip(candles.high, candles.low))
 
-        #   - Cacular porecentagem candle em relação ao tamanho minimo
-        size_relative_size_min.append(round(((size_total[i]) * 100) / min_size_candle)) 
+    #   - Cacular porecentagem candle em relação ao tamanho minimo
+    data['size_relative_size_min']    =  list(map(map_porcent_min_size_candle, data['size_total']))
 
-        #   - Calcular porcentagem candle em relação ao tamanho range
-        size_relative_range_total.append(round(((size_total[i]) * 100) / range_total)) 
-
-        #  %PavioSup %Corpo %PavioInf - em relação ao tamanho do candled
-        #   -   - Candle Positivo(1) ou Negativo(-1):
-        pos_or_neg.append((1)if((candles.close[i] - candles.open[i]) >= 0)else(-1)) 
-
-        #   -   - % Pavio Superior
-        pts_pavio_superior.append((candles.high[i] - candles.close[i])if(pos_or_neg[i] == 1)else(candles.high[i] - candles.open[i])) 
-        porcent_pavio_superior.append((round(((pts_pavio_superior[i])*100)/(size_total[i]))) if (pts_pavio_superior[i] != 0) else(0)) 
-
-        #   -   - % Corpo Candle
-        pts_Body.append(abs(candles.open[i] - candles.close[i])) 
-        porcent_Body.append((round(((pts_Body[i])*100)/(size_total[i]))) if (pts_Body[i] != 0) else(0)) 
-
-        #   -   - % Pavio Inferior
-        pts_pavio_inferior.append((candles.open[i] - candles.low[i])if(pos_or_neg[i] == 1)else(candles.close[i] - candles.low[i])) 
-        porcent_pavio_inferior.append((round(((pts_pavio_inferior[i])*100)/(size_total[i]))) if (pts_pavio_inferior[i] != 0) else(0)) 
-
+    #   - Calcular porcentagem candle em relação ao tamanho range
+    data['size_relative_range_total'] =  list(map(map_porcent_range_total, data['size_total']))
     
-    data['size_total']                =  size_total
-    data['size_relative_size_min']    =  size_relative_size_min
-    data['size_relative_range_total'] =  size_relative_range_total
-    data['pos_or_neg']                =  pos_or_neg
-    data['pts_pavio_superior']        =  pts_pavio_superior
-    data['pts_Body']                  =  pts_Body
-    data['pts_pavio_inferior']        =  pts_pavio_inferior
-    data['porcent_pavio_superior']    =  porcent_pavio_superior
-    data['porcent_Body']              =  porcent_Body
-    data['porcent_pavio_inferior']    =  porcent_pavio_inferior
+    #  %PavioSup %Corpo %PavioInf - em relação ao tamanho do candled
+    
+        #   -   - Candle Positivo(1) ou Negativo(-1):
+    data['pos_or_neg']                =  list((1)if (c - o)>=0 else(-1) for c, o in zip(candles.close, candles.open))
+
+    #   -   - % Pts tamanho dos candles
+    data['pts_pavio_superior']        =  list(map(pts_pavio_superior, candles.open, candles.close, candles.high, data['pos_or_neg']))
+    data['pts_Body']                  =  list(map(pts_Body, candles.open, candles.close))
+    data['pts_pavio_inferior']        =  list(map(pts_pavio_inferior, candles.open, candles.close, candles.low, data['pos_or_neg']))
+
+    #   -   - % Porcentagem tamanho dos candles
+    data['porcent_pavio_superior']    =  list(map(porcent_body_sup_inf, data['pts_pavio_superior'], data['size_total'] ))
+    data['porcent_Body']              =  list(map(porcent_body_sup_inf, data['pts_Body'], data['size_total'] ))
+    data['porcent_pavio_inferior']    =  list(map(porcent_body_sup_inf, data['pts_pavio_inferior'], data['size_total'] ))
 
     return data
 

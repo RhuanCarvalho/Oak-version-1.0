@@ -7,7 +7,8 @@ from datetime import datetime, time
 from Classes.Pessoas                        import Pessoa
 from Classes.History                        import History
 from Classes.Auxiliar                       import (
-get_index
+get_index,
+calcule_porcent
 )
 
 class Sub_Training:
@@ -30,10 +31,10 @@ class Sub_Training:
         self.current_generation             = 0 
         self.num_current_file               = 0
         self.dias_testados                  = 0
-        self.total_candles_para_treinamento = len(os.listdir('Database/Arquivos_Por_Numero_Read_IA'))
-        # self.num_candles_train              = 50 # treinar essa quantidade de dias
-        self.num_candles_train              = self.total_candles_para_treinamento - 1 # treinar essa quantidade de dias
+        self.total_candles_para_treinamento = 0
+        self.num_candles_train              = 0 # treinar essa quantidade de dias
         self.percorrer_candles              = 0
+        self.size_populacao                 = 0
 
         self.redes, self.genomas, self.pessoas, self.history = [],[],[],[]
 
@@ -50,10 +51,14 @@ class Sub_Training:
         self.hourMinute_end     = time(hour=14,minute=0) # horário de fim 12:00 
 
     def create_days(self):
+
+        self.total_candles_para_treinamento = len(os.listdir('Database/Arquivos_Por_Numero_Read_IA'))
+        self.num_candles_train = self.total_candles_para_treinamento - 1 # treinar essa quantidade de dias
+
         self.dias = list([pd.DataFrame(
             pd.read_csv(f'Database/Arquivos_Por_Numero_Read_IA/{str(i)}.csv')
                 ) for i in range(self.total_candles_para_treinamento)])
-        self.dias.reverse()
+        # self.dias.reverse()
 
     def reset_list(self):
         self.redes, self.genomas, self.pessoas, self.history = [],[],[],[]
@@ -62,8 +67,12 @@ class Sub_Training:
     def init_var_fitness_function(self, genomas_originais, config):
 
         # estruturando variaveis para IA Treinar			
+        size_populacao_genomas = len(genomas_originais)
+        i=0
         for _, genoma in genomas_originais:
-            
+            sys.stdout.write(f'\rCreate Vars for FitnessFunction: {calcule_porcent(i,self.size_populacao):<5}%')
+            i+=1
+
             # criando rede neural pessoa
             rede = neat.nn.FeedForwardNetwork.create(genoma, config)
             
@@ -75,6 +84,10 @@ class Sub_Training:
             self.genomas.append(genoma)
             self.pessoas.append(Pessoa())
             self.history.append(History())
+
+        self.size_populacao = len(self.pessoas)
+        print(f'\nTamanho População Genomas: {size_populacao_genomas}')
+        print(f'Tamanho População Pessoas: {self.size_populacao}\n')
             
     def atualizar_candles(self): 
 
@@ -83,7 +96,7 @@ class Sub_Training:
         else:
             self.encerramento = True 
 
-        if (self.num_current_file >= self.num_candles_train):
+        if (self.num_current_file > self.num_candles_train):
             self.num_current_file = 0
             self.finalize = True
         else:
@@ -116,11 +129,11 @@ class Sub_Training:
                     "history_trades": self.pessoas[i].trades,
                 })
 
-    def score_diario(self):
+    def score_fitness(self):
         print('\nAdd Score in Genomas :\n')
         self.porcentagem_media_atingida = []
         for i, hist in enumerate(self.history):
-            sys.stdout.write(f'\rcalculete: {((i*100)/len(self.history)):>2}%')
+            sys.stdout.write(f'\rAdd Score Fitness in Genomes: {calcule_porcent(i,self.size_populacao):<5}%')
 
             porcent_dos_dias = [dia["porcent_trades_gain"] for dia in hist.history_dias]
 
@@ -285,6 +298,8 @@ class Sub_Training:
                 for history in training['history_trades']:
                     history.update({"id_training":id_training})
                     id_historytrades = (requests.post(self.url_historytrades, json=history)).json()
+        print('Enviado!')
+
 
     def finish_and_save(self):
         print('\nCriando Melhor Genoma!')

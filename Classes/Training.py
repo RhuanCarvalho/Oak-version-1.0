@@ -2,11 +2,13 @@ import sys
 from Classes.Decorators         import calcule_time_function
 
 from Classes.Custom_NEAT        import Custom_NEAT
+from Classes.Pessoas            import buy_dict, sell_dict
 from Classes.Sub_Training       import Sub_Training
 from Classes.Auxiliar           import (
 verify_hourInit_hourEnd,
 inputs_IA,
-load_RuleColor
+load_RuleColor,
+calcule_porcent
 )
 
 
@@ -17,20 +19,25 @@ class Training(Sub_Training):
         Sub_Training.__init__(self)
         self.custom_neat    = Custom_NEAT()
         
-        # Criar dias para Treinamento
-        self.create_days()
 
     @calcule_time_function
     def fitness_function_Oak(self, genomas_originais, config):
+        
+        # Criar dias para Treinamento
+        print('Crindo Dias!\n')
+        self.create_days()
 
         # lista para variaveis necessarias para IA (Todos os indices serão iguais e correspondentes)
+        print('Resetando listas!\n')
         self.reset_list()
 
-        self.dias_testados = 0
+        # self.dias_testados = 0
 
         # estruturando variaveis para IA Treinar
+        print('Iniciando Varias Genomas e Redes!\n')
         self.init_var_fitness_function(genomas_originais, config)
 
+        print('Run training!\n')
         while True:
 
             # Verificação Total Candles Treinamento
@@ -58,17 +65,24 @@ class Training(Sub_Training):
                 if (range_InputsIA_init < 0):
                     continue
 
-                # Verificar horário de inicio e fim de cada dia 
+                # Verificar horário de inicio e fim de cada dia
                 if(verify_hourInit_hourEnd(self.candles.iloc[range_RuleColor_end - 1], self.hourMinute_init, self.hourMinute_end)):
 
                     # codigo de Buy or Sell só sera ativado se a regra de coloração for ativada
                     if (load_RuleColor(self.candles[range_RuleColor_init:range_RuleColor_end], self.min_size_candle)):
+                        time_candle = self.candles.time[range_RuleColor_end]
 
                         # criando inputs para IA de acordo com o padrão
                         input_IA = inputs_IA(self.candles[range_InputsIA_init:range_InputsIA_end], self.min_size_candle)
 
+                        # criando inputs de trades
+                        buy_sl_or_gn, buy_trade_dict = buy_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
+                        sell_sl_or_gn, sell_trade_dict = sell_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
+
+
                         # percorrer pessoas (o que cada pessoas criada pela IA vai tomar de decis�o)
                         for i, pessoa in enumerate(self.pessoas):
+                            porcent_load = calcule_porcent(i,self.size_populacao)
                             
                             # passando entradas para IA para obter output
                             output = self.redes[i].activate(input_IA)    
@@ -76,22 +90,20 @@ class Training(Sub_Training):
 
                             # Tomadas de Decisão   BUY / SELL / NOT_ACTION
                             if action == 0: # BUY
-                                pessoa.buy(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:])
+                                pessoa.add_trade(buy_sl_or_gn, buy_trade_dict)
                                                                 
                             if action == 1: #  SELL 
-                                pessoa.sell(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:])                               
+                                pessoa.add_trade(sell_sl_or_gn, sell_trade_dict)                               
 
-                sys.stdout.write(
-                    f'\rDate: {self.candles.time[range_RuleColor_end]} | Total dias: {self.total_candles_para_treinamento} | Total Dias Percorridos: { self.dias_testados}'
-                    )
+                            sys.stdout.write(f'\rDate: {time_candle} [Run Pop: {porcent_load:<5}%]| Total dias: {self.total_candles_para_treinamento} | Total Dias Percorridos: { self.num_current_file}')
 
             
             self.add_data_in_history_diario(self.candles.iloc[0].time[:10])
 
             # count Dias
-            self.dias_testados += 1
+            # self.dias_testados += 1
 
-        self.score_diario()
+        self.score_fitness()
 
         self.send_api()
 
@@ -99,6 +111,7 @@ class Training(Sub_Training):
         if self.encerramento:
             self.finish_and_save()
         else:
+            print('Training Finish Generation!\n')
             self.current_generation +=1   
 
         print('\n')

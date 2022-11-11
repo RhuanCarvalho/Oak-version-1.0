@@ -16,7 +16,7 @@ def printTime(*args):
     hour_, min_, sec_, mili_, total_ = args[0]
     name = args[1]
     
-    print(f'function [ {name:^40} ] -> time execution {total_:.3f} seconds [{hour_:0>2}:{min_:0>2}:{sec_:0>2}:{mili_:0>3} (hh:mm:ss:ml)]')
+    print(f'\nfunction [ {name:^40} ] -> time execution {total_:.3f} seconds [{hour_:0>2}:{min_:0>2}:{sec_:0>2}:{mili_:0>3} (hh:mm:ss:ml)]\n\n')
 
 
 def calcule_time_function(function_):
