@@ -31,7 +31,7 @@ class Oak:
         self.hourMinute_end     = time(hour=14,minute=0) # horário de fim 12:00
 
         self.symbol   = str('WINZ22')
-        self.stop_max = 250
+        self.stop_max = 265
         self.marge_stop  = 5
         self.qtd_contratos = float(1.0)
 
@@ -78,22 +78,30 @@ class Oak:
                 print("symbol_select({}}) failed, exit",self.symbol)
 
         if type_order == 0:
-            msg().send_message(3, f'Oak - Compra | {str(candle_decision.time).replace(":", ".")}')
             type_ = 'BUY'
             price_ = mt5.symbol_info_tick(self.symbol).ask # for Buy
-            size_Gain, size_Stop, stop_price, gain_price = calculete_size_gain_stop(candle_decision, type_, self.marge_stop, self.stop_max)
-            take_ = price_ + size_Gain
-            stop_ = price_ - size_Stop
-            type_order_mt5 = mt5.ORDER_TYPE_BUY
+            size_Gain, size_Stop, stop_price, gain_price, validade_trade = calculete_size_gain_stop(candle_decision, type_, self.marge_stop, self.stop_max)
+            if validade_trade:
+                msg().send_message(3, f'TRADE NÃO REALIZADO [ULTRAPASSOU STOP-MAX] | {str(candle_decision.time).replace(":", ".")}')
+                return None
+            else:
+                msg().send_message(3, f'Oak - Compra | {str(candle_decision.time).replace(":", ".")}')
+                take_ = price_ + size_Gain
+                stop_ = price_ - size_Stop
+                type_order_mt5 = mt5.ORDER_TYPE_BUY
 
         if type_order == 1:
-            msg().send_message(3, f'Oak - Venda | {str(candle_decision.time).replace(":", ".")}')
             type_ = 'SELL'
             price_ = mt5.symbol_info_tick(self.symbol).bid # for Buy
-            size_Gain, size_Stop, stop_price, gain_price = calculete_size_gain_stop(candle_decision, type_, self.marge_stop, self.stop_max)
-            take_ = price_ - size_Gain
-            stop_ = price_ + size_Stop
-            type_order_mt5 = mt5.ORDER_TYPE_SELL
+            size_Gain, size_Stop, stop_price, gain_price, validade_trade = calculete_size_gain_stop(candle_decision, type_, self.marge_stop, self.stop_max)
+            if validade_trade:
+                msg().send_message(3, f'TRADE NÃO REALIZADO [ULTRAPASSOU STOP-MAX] | {str(candle_decision.time).replace(":", ".")}')
+                return None
+            else:
+                msg().send_message(3, f'Oak - Venda | {str(candle_decision.time).replace(":", ".")}')
+                take_ = price_ - size_Gain
+                stop_ = price_ + size_Stop
+                type_order_mt5 = mt5.ORDER_TYPE_SELL
 
         deviation = 1
         magic = 121523
@@ -165,16 +173,19 @@ class Oak:
         # candles.to_csv(f'entradasOakReal/trade - {hour_} - {trade_}.csv', index=False)
 
         request_ = self.create_request(decision, candles.iloc[-1])
-        result = mt5.order_check(request_)
-        check_send_oreder = mt5.order_send(request_)
-        
-        print('\nRequest:\n')
-        self.pp.pprint(request_)
-        print('\nCheck:\n')
-        self.pp.pprint(result)
-        print('\nCheck Send Order:\n')
-        self.pp.pprint(check_send_oreder)
-        print('\n')
+        if request_ == None:
+            print('\nTrade Não Realizado - Stop Maior que Stop Max')
+        else:
+            result = mt5.order_check(request_)
+            check_send_oreder = mt5.order_send(request_)
+            
+            print('\nRequest:\n')
+            self.pp.pprint(request_)
+            print('\nCheck:\n')
+            self.pp.pprint(result)
+            print('\nCheck Send Order:\n')
+            self.pp.pprint(check_send_oreder)
+            print('\n')
 
     def start(self):
 

@@ -38,8 +38,8 @@ class Pessoa:
 # -----------------------------------------
 # Variaveis Globais
 # -----------------------------------------
-stop_max           = 250 # 250 maximo de stop
-valor_max_trade    = (51,-51)
+stop_max           = 265 # 250 maximo de stop
+valor_max_trade    = (60,-60)
 marge_stop         = 5
 num_contratos      = 1
 # -----------------------------------------
@@ -53,7 +53,10 @@ def buy_dict(candle_decision, candles):
     '''
     candles = pd.DataFrame(candles).reset_index(drop=True)
     type_order = 'BUY'
-    size_Gain, size_Stop, stop, gain = calculete_size_gain_stop(candle_decision, type_order, marge_stop, stop_max)
+    size_Gain, size_Stop, stop, gain, validade_trade = calculete_size_gain_stop(candle_decision, type_order, marge_stop, stop_max)
+
+    if validade_trade:
+        return ('',{}, False)
 
     for i in range(len(candles)):
 
@@ -74,7 +77,7 @@ def buy_dict(candle_decision, candles):
                 time_entrada=candle_decision.time, 
                 time_saida=candles.time[i]
                 )
-            return ('stop', buy_trade)
+            return ('stop', buy_trade, True)
             
         # Retorno Valor Gain    
         if (candles.high[i] >= gain):
@@ -93,7 +96,7 @@ def buy_dict(candle_decision, candles):
                 time_entrada=candle_decision.time, 
                 time_saida=candles.time[i]
                 )
-            return ('gain', buy_trade)
+            return ('gain', buy_trade, True)
 
 
 
@@ -106,7 +109,10 @@ def sell_dict(candle_decision, candles):
     '''
     candles = pd.DataFrame(candles).reset_index(drop=True)
     type_order = 'SELL'
-    size_Gain, size_Stop, stop, gain = calculete_size_gain_stop(candle_decision, type_order, marge_stop, stop_max)
+    size_Gain, size_Stop, stop, gain, validade_trade = calculete_size_gain_stop(candle_decision, type_order, marge_stop, stop_max)
+
+    if validade_trade:
+        return ('',{}, False)
 
     for i in range(len(candles)):
 
@@ -127,7 +133,7 @@ def sell_dict(candle_decision, candles):
                 time_entrada=candle_decision.time, 
                 time_saida=candles.time[i]
                 )
-            return ('stop', sell_trade)
+            return ('stop', sell_trade, True)
 
         # Retorno Valor Gain    
         if (candles.low[i] <= gain):
@@ -146,7 +152,7 @@ def sell_dict(candle_decision, candles):
                 time_entrada=candle_decision.time, 
                 time_saida=candles.time[i]
                 )
-            return ('gain', sell_trade)
+            return ('gain', sell_trade, True)
 
 def create_dict(
     stop_or_gain, 

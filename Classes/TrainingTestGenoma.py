@@ -42,18 +42,22 @@ class TrainingTestGenoma(Sub_TestGenoma):
 
                 # codigo de Buy or Sell só sera ativado se a regra de coloração for ativada
                 if (self.load_RuleColor(self.candles[range_RuleColor_init:range_RuleColor_end])):
-                        
-                    # passando entradas para IA para obter output
-                    action = self.decision_rede(self.candles[range_InputsIA_init:range_InputsIA_end], self.min_size_candle)
 
-                    # Tomadas de Decisão   BUY / SELL / NOT_ACTION
-                    if action == 0: # BUY
-                        buy_sl_or_gn, buy_trade_dict = buy_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
-                        self.pessoa.add_trade(buy_sl_or_gn, buy_trade_dict)
-                                                        
-                    if action == 1: #  SELL 
-                        sell_sl_or_gn, sell_trade_dict = sell_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
-                        self.pessoa.add_trade(sell_sl_or_gn, sell_trade_dict)                               
+                    # criando inputs de trades
+                    buy_sl_or_gn, buy_trade_dict, validade_trade = buy_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
+                    sell_sl_or_gn, sell_trade_dict, validade_trade = sell_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
+
+                    if validade_trade:
+                        
+                        # passando entradas para IA para obter output
+                        action = self.decision_rede(self.candles[range_InputsIA_init:range_InputsIA_end], self.min_size_candle)
+
+                        # Tomadas de Decisão   BUY / SELL / NOT_ACTION
+                        if action == 0: # BUY
+                            self.pessoa.add_trade(buy_sl_or_gn, buy_trade_dict)
+                                                            
+                        if action == 1: #  SELL 
+                            self.pessoa.add_trade(sell_sl_or_gn, sell_trade_dict)                               
 
         
         self.add_data_in_history_diario(self.candles.iloc[0].time[:10])

@@ -72,30 +72,32 @@ class Training(Sub_Training):
                     if (load_RuleColor(self.candles[range_RuleColor_init:range_RuleColor_end], self.min_size_candle)):
                         time_candle = self.candles.time[range_RuleColor_end]
 
-                        # criando inputs para IA de acordo com o padrão
-                        input_IA = inputs_IA(self.candles[range_InputsIA_init:range_InputsIA_end], self.min_size_candle)
-
                         # criando inputs de trades
-                        buy_sl_or_gn, buy_trade_dict = buy_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
-                        sell_sl_or_gn, sell_trade_dict = sell_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
+                        buy_sl_or_gn, buy_trade_dict, validade_trade = buy_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
+                        sell_sl_or_gn, sell_trade_dict, validade_trade = sell_dict(self.candles.iloc[range_RuleColor_end - 1], self.candles.iloc[range_RuleColor_end:]) 
+
+                        if validade_trade:
+
+                            # criando inputs para IA de acordo com o padrão
+                            input_IA = inputs_IA(self.candles[range_InputsIA_init:range_InputsIA_end], self.min_size_candle)
 
 
-                        # percorrer pessoas (o que cada pessoas criada pela IA vai tomar de decis�o)
-                        for i, pessoa in enumerate(self.pessoas):
-                            porcent_load = calcule_porcent(i,self.size_populacao)
-                            
-                            # passando entradas para IA para obter output
-                            output = self.redes[i].activate(input_IA)    
-                            action = output.index(max(output))
+                            # percorrer pessoas (o que cada pessoas criada pela IA vai tomar de decis�o)
+                            for i, pessoa in enumerate(self.pessoas):
+                                porcent_load = calcule_porcent(i,self.size_populacao)
+                                
+                                # passando entradas para IA para obter output
+                                output = self.redes[i].activate(input_IA)    
+                                action = output.index(max(output))
 
-                            # Tomadas de Decisão   BUY / SELL / NOT_ACTION
-                            if action == 0: # BUY
-                                pessoa.add_trade(buy_sl_or_gn, buy_trade_dict)
-                                                                
-                            if action == 1: #  SELL 
-                                pessoa.add_trade(sell_sl_or_gn, sell_trade_dict)                               
+                                # Tomadas de Decisão   BUY / SELL / NOT_ACTION
+                                if action == 0: # BUY
+                                    pessoa.add_trade(buy_sl_or_gn, buy_trade_dict)
+                                                                    
+                                if action == 1: #  SELL 
+                                    pessoa.add_trade(sell_sl_or_gn, sell_trade_dict)                               
 
-                            sys.stdout.write(f'\rDate: {time_candle} [Run Pop: {porcent_load:<5}%]| Total dias: {self.total_candles_para_treinamento} | Total Dias Percorridos: { self.num_current_file}')
+                                sys.stdout.write(f'\rDate: {time_candle} [Run Pop: {porcent_load:<5}%]| Total dias: {self.total_candles_para_treinamento} | Total Dias Percorridos: { self.num_current_file}')
 
             
             self.add_data_in_history_diario(self.candles.iloc[0].time[:10])

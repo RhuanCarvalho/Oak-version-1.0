@@ -98,7 +98,9 @@ def calculete_size_gain_stop(candle_, order, marge_stop, stop_max):
             size_Gain = candle_.high - candle_.close
 
         # Caso a pontuação seja maior que stop maximo
-        if (size_Stop > stop_max):
+        if (size_Stop >= stop_max):
+
+            return 0,0,0,0, True
 
             size_Stop = stop_max
             size_Gain = stop_max
@@ -124,7 +126,9 @@ def calculete_size_gain_stop(candle_, order, marge_stop, stop_max):
             size_Gain = candle_.high - candle_.close
 
         # Caso a pontuação seja maior que stop maximo
-        if (size_Stop > stop_max):
+        if (size_Stop >= stop_max):
+
+            return 0,0,0,0, True
 
             size_Stop = stop_max
             size_Gain = stop_max
@@ -134,7 +138,7 @@ def calculete_size_gain_stop(candle_, order, marge_stop, stop_max):
         gain = candle_.close - size_Gain    
         
 
-    return size_Gain, size_Stop, stop, gain
+    return size_Gain, size_Stop, stop, gain, False
 
 def verify_hourInit_hourEnd( candle_verify, hourMinute_init, hourMinute_end):
     hour_candle = int(candle_verify.time[10:13])
