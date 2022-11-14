@@ -4,7 +4,7 @@ from numba import jit
 
 from statistics import median_high
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, fastmath=True, cache=True)
 def calcule_porcent(valor_atual, valor_total):
     porcent_ = round((valor_atual*100)/(valor_total-1),2)
     return porcent_
@@ -63,7 +63,7 @@ def load_RuleColor(candles, min_size_candle):
     # Retorna False para caso não encaixe no padrão
     return False
      
-@jit(nopython=True, cache=True)
+@jit(nopython=True, fastmath=True, cache=True)
 def calculete_valor_finaceiro_trade( size_in_pts, result, num_contratos, valor_max_trade):
     
     valor = size_in_pts * 0.20 * num_contratos 
@@ -217,7 +217,7 @@ def calculete_porcentVolumeRefFirst(candles):
 
 def calculete_distance_CloseCandle_CloseBandasBollinger(candles, weight_porcent):
     data = pd.DataFrame()
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, fastmath=True, cache=True)
     def map_calcule(valor1, valor2):
         return int(round((100 - ((valor1*100)/valor2) ) * weight_porcent)) 
 
@@ -229,7 +229,7 @@ def calculete_distance_CloseCandle_CloseBandasBollinger(candles, weight_porcent)
 
 def calculete_distance_CloseCandle_CloseMedias_9_20_50_200(candles, weight_porcent):
     data = pd.DataFrame()
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, fastmath=True, cache=True)
     def map_calcule(valor1, valor2):
       return int(round((100 - ((valor1*100)/valor2) ) * weight_porcent)) 
 
@@ -244,30 +244,30 @@ def calculete_paramsDefaultCandle(candles, min_size_candle, range_total):
 
     data = pd.DataFrame()
 
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, fastmath=True, cache=True)
     def map_porcent_min_size_candle(valor):
         return int(round(((valor) * 100) / min_size_candle))
 
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, fastmath=True, cache=True)
     def map_porcent_range_total(valor):
         return int(round(((valor) * 100) / range_total))
 
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, fastmath=True, cache=True)
     def porcent_body_sup_inf(valor1, valor2):
         return (round(((valor1)*100)/(valor2))) if (valor1 != 0) else(0)
     
     # pts Pavio Superior
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, fastmath=True, cache=True)
     def pts_pavio_superior(open, close, high, pos_or_neg):
         return int((high - close)if(pos_or_neg == 1)else(high - open))
 
     # pts Corpo Candle
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, fastmath=True, cache=True)
     def pts_Body(open, close):
         return int(abs(open - close))
 
     # pts Pavio Inferior
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, fastmath=True, cache=True)
     def pts_pavio_inferior(open, close, low, pos_or_neg):
         return int((open - low)if(pos_or_neg == 1)else(close - low))
 
