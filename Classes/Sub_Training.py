@@ -70,7 +70,7 @@ class Sub_Training:
         size_populacao_genomas = len(genomas_originais)
         i=0
         for _, genoma in genomas_originais:
-            sys.stdout.write(f'\rCreate Vars for FitnessFunction: {calcule_porcent(i,self.size_populacao):<5}%')
+            sys.stdout.write(f'\rCreate Vars for FitnessFunction: {round(calcule_porcent(i,self.size_populacao),2):<5}%')
             i+=1
 
             # criando rede neural pessoa
@@ -133,7 +133,7 @@ class Sub_Training:
         print('\nAdd Score in Genomas :\n')
         self.porcentagem_media_atingida = []
         for i, hist in enumerate(self.history):
-            sys.stdout.write(f'\rAdd Score Fitness in Genomes: {calcule_porcent(i,self.size_populacao):<5}%')
+            sys.stdout.write(f'\rAdd Score Fitness in Genomes: {round(calcule_porcent(i,self.size_populacao),2):<5}%')
 
             porcent_dos_dias = [dia["porcent_trades_gain"] for dia in hist.history_dias]
 

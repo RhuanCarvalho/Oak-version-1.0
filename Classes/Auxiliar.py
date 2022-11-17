@@ -6,7 +6,7 @@ from statistics import median_high
 
 @jit(nopython=True, fastmath=True, cache=True)
 def calcule_porcent(valor_atual, valor_total):
-    porcent_ = round((valor_atual*100)/(valor_total-1),2)
+    porcent_ = (valor_atual*100)/(valor_total-1)
     return porcent_
 
 def create_model_candles(candles_bruto):
