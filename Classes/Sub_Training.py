@@ -27,7 +27,7 @@ class Sub_Training:
         self.finalize                       = False
         self.encerramento                   = False
 
-        self.min_size_candle = 85
+        self.min_size_candle = 5
         self.current_generation             = 0 
         self.num_current_file               = 0
         self.dias_testados                  = 0
@@ -39,7 +39,7 @@ class Sub_Training:
         self.redes, self.genomas, self.pessoas, self.history = [],[],[],[]
 
         # porcentagem
-        self.porcentMinGeral = 30
+        self.porcentMinGeral = 0
         self.porcentagem_desejada = 85
         self.porcentagem_media_atingida = []
 
@@ -52,12 +52,16 @@ class Sub_Training:
 
     def create_days(self):
 
-        self.total_candles_para_treinamento = len(os.listdir('Database/Arquivos_Por_Numero_Read_IA'))
+        list_ = os.listdir('Database/Arquivos_Por_Numero_Read_IA')
+        order_ = list([(int(i.replace('.csv','')), i) for i in list_ ])
+        order_.sort()
+
+        self.total_candles_para_treinamento = len(list_)
         self.num_candles_train = self.total_candles_para_treinamento - 1 # treinar essa quantidade de dias
 
         self.dias = list([pd.DataFrame(
-            pd.read_csv(f'Database/Arquivos_Por_Numero_Read_IA/{str(i)}.csv')
-                ) for i in range(self.total_candles_para_treinamento)])
+            pd.read_csv(f'Database/Arquivos_Por_Numero_Read_IA/{name_file}')
+                ) for i, name_file in order_])
         # self.dias.reverse()
 
     def reset_list(self):
@@ -143,7 +147,7 @@ class Sub_Training:
             countMenorQue, count40, count50, count60, count70, count80, count90 = 0,0,0,0,0,0,0
 
             for porcent in porcent_dos_dias:
-                if porcent <= self.porcentMinGeral:
+                if porcent < self.porcentMinGeral:
                     countMenorQue += 1
                 if porcent >= 40:
                     count40 += 1

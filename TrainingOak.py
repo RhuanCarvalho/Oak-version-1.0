@@ -23,5 +23,5 @@ if __name__ == '__main__':
             \nFazer verificação do codigo
         ''' 
 
-        msg().send_message(1,message)
+        # msg().send_message(1,message)
         print(message)

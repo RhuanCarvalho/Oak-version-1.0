@@ -45,10 +45,10 @@ class Create_Candles_DataBase:
         df = pd.DataFrame()
         upper, middle, lower = [],[],[]
         
-        df['media9'] = round(ta.SMA(candles.close, timeperiod=9))
+        # df['media9'] = round(ta.SMA(candles.close, timeperiod=9))
         df['media20'] = round(ta.SMA(candles.close, timeperiod=20))
-        df['media50'] = round(ta.SMA(candles.close, timeperiod=50))
-        df['media200'] = round(ta.SMA(candles.close, timeperiod=200))
+        # df['media50'] = round(ta.SMA(candles.close, timeperiod=50))
+        # df['media200'] = round(ta.SMA(candles.close, timeperiod=200))
         upper, middle, lower = ta.BBANDS(candles.close, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0)
         df['upperBB'], df['middleBB'], df['lowerBB'] = round(upper), round(middle), round(lower)
 
@@ -79,7 +79,7 @@ class Create_Candles_DataBase:
         # salvando o retorno dos candles como DATAFRAME(pandas)
         candles = pd.DataFrame(rates)
 
-        candles['volume'] = candles['real_volume']
+        # candles['volume'] = candles['real_volume']
 
         # Retirando colunas que não serão usadas
         candles = candles.drop(columns=["tick_volume","spread","real_volume"])
@@ -94,7 +94,7 @@ class Create_Candles_DataBase:
         left_index=True, 
         how='outer')
 
-        aleat = candles[candles['media200'].isnull()]
+        aleat = candles[candles['media20'].isnull()]
         lastDatainNull = str(aleat.time.iloc[-1])[0:10]
 
         countIndex = 0
@@ -176,7 +176,7 @@ if __name__ == '__main__':
     
     # # Apenas para tratamento de dados
     # # ---------------------------------------------------
-    ativo = "WIN@"
+    ativo = "WDO@"
 
     candles = Create_Candles_DataBase()
 

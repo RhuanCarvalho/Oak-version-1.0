@@ -29,7 +29,7 @@ class Training(Sub_Training):
     def fitness_function_Oak(self, genomas_originais, config):
         
         # Criar dias para Treinamento
-        print('Crindo Dias!\n')
+        print('Criando Dias!\n')
         self.create_days()
 
         # lista para variaveis necessarias para IA (Todos os indices serão iguais e correspondentes)
@@ -67,8 +67,8 @@ class Training(Sub_Training):
                         # add entrada por horario
                         range_RuleColor_init = j
                         range_RuleColor_end = j + 4
-                        range_InputsIA_init = (j-6)
-                        range_InputsIA_end = (j-6) + 10
+                        range_InputsIA_init = (j-1)
+                        range_InputsIA_end = (j-1) + 5
 
                         # para que que o indice inicial em inputs IA não seja negativo
                         if (range_InputsIA_init < 0):
@@ -137,8 +137,8 @@ class Training(Sub_Training):
         populacao, self.current_generation = self.custom_neat.get_population(config_file)
 
         # Treinamento IA
-        self.custom_neat.best = populacao.run(self.fitness_function_Oak) # , 1) -> caso precise para de rodar por determinado numero de gerações
+        self.custom_neat.best = populacao.run(self.fitness_function_Oak,2) # , 1) -> caso precise para de rodar por determinado numero de gerações
 
         # salva o melhor genoma / pega o numero da geração atual para salvar no arquivo do melhor genoma
-        self.custom_neat.save_best(self.current_generation)
-        print(f"Melhor Genoma Salvo - Generation : {self.current_generation}")
+        # self.custom_neat.save_best(self.current_generation)
+        # print(f"Melhor Genoma Salvo - Generation : {self.current_generation}")

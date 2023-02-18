@@ -38,9 +38,9 @@ class Pessoa:
 # -----------------------------------------
 # Variaveis Globais
 # -----------------------------------------
-stop_max           = 265 # 250 maximo de stop
-valor_max_trade    = (60,-60)
-marge_stop         = 5
+stop_max           = 20 # 250 maximo de stop
+valor_max_trade    = (200,-200)
+marge_stop         = 0.5
 num_contratos      = 1
 # -----------------------------------------
 
@@ -80,7 +80,7 @@ def buy_dict(candle_decision, candles):
             return ('stop', buy_trade, True)
             
         # Retorno Valor Gain    
-        if (candles.high[i] >= gain):
+        if (candles.high[i] >= (gain + marge_stop)):
 
             buy_trade = create_dict(
                 stop_or_gain= 'gain', 
@@ -136,7 +136,7 @@ def sell_dict(candle_decision, candles):
             return ('stop', sell_trade, True)
 
         # Retorno Valor Gain    
-        if (candles.low[i] <= gain):
+        if (candles.low[i] <= (gain - marge_stop)):
 
             sell_trade = create_dict(
                 stop_or_gain= 'gain', 

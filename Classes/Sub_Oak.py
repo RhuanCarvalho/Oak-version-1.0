@@ -27,7 +27,7 @@ class Oak:
         self.better = self.init_better_genoma(id_generation)
 
         self.min_size_candle = 85
-        self.hourMinute_init    = time(hour=9,minute=18)  # horário de inicio 09:00
+        self.hourMinute_init    = time(hour=9,minute=8)  # horário de inicio 09:00
         self.hourMinute_end     = time(hour=14,minute=0) # horário de fim 12:00
 
         self.symbol   = str('WINZ22')
@@ -105,23 +105,34 @@ class Oak:
 
         deviation = 1
         magic = 121523
-        message = f'{type_} in symbol {self.symbol}'
+        message = f'Suggestion {type_} in symbol {self.symbol}'
 
         # create request
         request_order = {
-            "action": mt5.TRADE_ACTION_DEAL,
-            "symbol": self.symbol,
-            "volume": float(self.qtd_contratos),
-            "type": type_order_mt5,
+            "type": type_,
             "price": float(price_),
             "sl": float(stop_),
+            "size_sl": float(size_Stop),
             "tp": float(take_),
-            "deviation": deviation,
-            "magic": magic,
+            "size_tp": float(size_Gain),
             "commemt": message,
-            "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": mt5.ORDER_FILLING_RETURN
         } 
+
+        # # create request
+        # request_order = {
+        #     "action": mt5.TRADE_ACTION_DEAL,
+        #     "symbol": self.symbol,
+        #     "volume": float(self.qtd_contratos),
+        #     "type": type_order_mt5,
+        #     "price": float(price_),
+        #     "sl": float(stop_),
+        #     "tp": float(take_),
+        #     "deviation": deviation,
+        #     "magic": magic,
+        #     "commemt": message,
+        #     "type_time": mt5.ORDER_TIME_GTC,
+        #     "type_filling": mt5.ORDER_FILLING_RETURN
+        # } 
         
 
         return request_order
@@ -154,6 +165,15 @@ class Oak:
         # print(candles)   
 
         return load_RuleColor(candles, self.min_size_candle)
+    
+    def sugest_print(self, request_):
+        print(f'''
+        ------------------------------------------
+        | {request_['commemt']}
+        | Gain {request_['size_tp']:<3}pts / Stop {request_['size_sl']:<3}pts
+        | Preço Entrada {request_['price']:<7}
+        ------------------------------------------
+        ''')
 
     def oak_send_order(self):
         '''
@@ -176,16 +196,17 @@ class Oak:
         if request_ == None:
             print('\nTrade Não Realizado - Stop Maior que Stop Max')
         else:
-            result = mt5.order_check(request_)
-            check_send_oreder = mt5.order_send(request_)
+            self.sugest_print(request_)
+            # result = mt5.order_check(request_)
+            # check_send_oreder = mt5.order_send(request_)
             
-            print('\nRequest:\n')
-            self.pp.pprint(request_)
-            print('\nCheck:\n')
-            self.pp.pprint(result)
-            print('\nCheck Send Order:\n')
-            self.pp.pprint(check_send_oreder)
-            print('\n')
+            # print('\nRequest:\n')
+            # self.pp.pprint(request_)
+            # print('\nCheck:\n')
+            # self.pp.pprint(result)
+            # print('\nCheck Send Order:\n')
+            # self.pp.pprint(check_send_oreder)
+            # print('\n')
 
     def start(self):
 

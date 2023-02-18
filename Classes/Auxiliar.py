@@ -28,7 +28,7 @@ def create_model_candles(candles_bruto):
     upper, middle, lower = ta.BBANDS(candles.close, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0)
     candles['upperBB'], candles['middleBB'], candles['lowerBB'] = round(upper), round(middle), round(lower)
 
-    return candles[-10:]
+    return candles[-5:]
 
 def load_RuleColor(candles, min_size_candle):
     '''
@@ -66,7 +66,7 @@ def load_RuleColor(candles, min_size_candle):
 @jit(nopython=True, fastmath=True, cache=True)
 def calculete_valor_finaceiro_trade( size_in_pts, result, num_contratos, valor_max_trade):
     
-    valor = size_in_pts * 0.20 * num_contratos 
+    valor = size_in_pts * 10 * num_contratos 
 
     if (result == "stop"):
         valor = valor *(-1)
@@ -104,6 +104,11 @@ def calculete_size_gain_stop(candle_, order, marge_stop, stop_max):
 
             size_Stop = stop_max
             size_Gain = stop_max
+        # -----------------------------------------------
+        # reduzindo stop pela Metade para testes
+        size_Gain = size_Gain * 0.5
+        # size_Gain = 3
+        # -----------------------------------------------
 
         # preços para rerificação 
         stop = candle_.close - size_Stop
@@ -132,6 +137,12 @@ def calculete_size_gain_stop(candle_, order, marge_stop, stop_max):
 
             size_Stop = stop_max
             size_Gain = stop_max
+
+        # -----------------------------------------------
+        # reduzindo stop pela Metade para testes
+        size_Gain = size_Gain * 0.5
+        # size_Gain = 3
+        # -----------------------------------------------
         
         # preços para rerificação 
         stop = candle_.close + size_Stop
@@ -200,20 +211,6 @@ def calculete_point_in_box(candles, main_point):
 
     return data
 
-def calculete_porcentVolumeRefFirst(candles):
-
-    data = pd.DataFrame()
-    porcentVolumeRefFirst = []
-
-    for i in range(len(candles)):
-        if i == 0:     
-            porcentVolumeRefFirst.append(100)
-        else:
-            porcentVolumeRefFirst.append(int((candles.volume[i]*100)/candles.volume[0]))
-
-    data['PorcentVolumeRefFirst'] = porcentVolumeRefFirst
-    
-    return data
 
 def calculete_distance_CloseCandle_CloseBandasBollinger(candles, weight_porcent):
     data = pd.DataFrame()
@@ -223,22 +220,11 @@ def calculete_distance_CloseCandle_CloseBandasBollinger(candles, weight_porcent)
 
     data['CloseRelativeBandsUpper']         = list(map(map_calcule, candles.close, candles.upperBB)) 
     data['CloseRelativeBandsLower']         = list(map(map_calcule, candles.close, candles.lowerBB))
+    data['CloseRelativeMedia20']  = list(map(map_calcule, candles.close,candles.media20))
     data['CloseRelativeBandsSizeDistance']  = list(map(map_calcule, candles.upperBB, candles.lowerBB))
 
     return data
 
-def calculete_distance_CloseCandle_CloseMedias_9_20_50_200(candles, weight_porcent):
-    data = pd.DataFrame()
-    @jit(nopython=True, fastmath=True, cache=True)
-    def map_calcule(valor1, valor2):
-      return int(round((100 - ((valor1*100)/valor2) ) * weight_porcent)) 
-
-    data['CloseRelativeMedia9']   = list(map(map_calcule, candles.close,candles.media9))
-    data['CloseRelativeMedia20']  = list(map(map_calcule, candles.close,candles.media20))
-    data['CloseRelativeMedia50']  = list(map(map_calcule, candles.close,candles.media50))
-    data['CloseRelativeMedia200'] = list(map(map_calcule, candles.close,candles.media200))
-
-    return data
 
 def calculete_paramsDefaultCandle(candles, min_size_candle, range_total):
 
@@ -288,14 +274,14 @@ def calculete_paramsDefaultCandle(candles, min_size_candle, range_total):
     data['pos_or_neg']                =  list((1)if (c - o)>=0 else(-1) for c, o in zip(candles.close, candles.open))
 
     #   -   - % Pts tamanho dos candles
-    data['pts_pavio_superior']        =  list(map(pts_pavio_superior, candles.open, candles.close, candles.high, data['pos_or_neg']))
-    data['pts_Body']                  =  list(map(pts_Body, candles.open, candles.close))
-    data['pts_pavio_inferior']        =  list(map(pts_pavio_inferior, candles.open, candles.close, candles.low, data['pos_or_neg']))
+    pts_pavio_superior_list        =  list(map(pts_pavio_superior, candles.open, candles.close, candles.high, data['pos_or_neg']))
+    pts_Body_list                  =  list(map(pts_Body, candles.open, candles.close))
+    pts_pavio_inferior_list        =  list(map(pts_pavio_inferior, candles.open, candles.close, candles.low, data['pos_or_neg']))
 
     #   -   - % Porcentagem tamanho dos candles
-    data['porcent_pavio_superior']    =  list(map(porcent_body_sup_inf, data['pts_pavio_superior'], data['size_total'] ))
-    data['porcent_Body']              =  list(map(porcent_body_sup_inf, data['pts_Body'], data['size_total'] ))
-    data['porcent_pavio_inferior']    =  list(map(porcent_body_sup_inf, data['pts_pavio_inferior'], data['size_total'] ))
+    data['porcent_pavio_superior']    =  list(map(porcent_body_sup_inf, pts_pavio_superior_list, data['size_total'] ))
+    data['porcent_Body']              =  list(map(porcent_body_sup_inf, pts_Body_list, data['size_total'] ))
+    data['porcent_pavio_inferior']    =  list(map(porcent_body_sup_inf, pts_pavio_inferior_list, data['size_total'] ))
 
     return data
 
@@ -322,28 +308,13 @@ def create_inputs_IA(candles, *args):
         #-----------------------------------------------------------------------
 
         #-----------------------------------------------------------------------
-        # Porcetagem distancia de fechamento(closeCandle) em relação a CloseMedia(9,20,50,200), multiplicado pelo peso
-        #-----------------------------------------------------------------------
-        inputs_.append(candles.CloseRelativeMedia9[i])
-        inputs_.append(candles.CloseRelativeMedia20[i])
-        inputs_.append(candles.CloseRelativeMedia50[i])
-        inputs_.append(candles.CloseRelativeMedia200[i])
-        #-----------------------------------------------------------------------
-
-        #-----------------------------------------------------------------------
         # Porcetagem distancia de fechamento(closeCandle) em relação a CloseBandsBollinger, multiplicado pelo peso
         #-----------------------------------------------------------------------
         inputs_.append(candles.CloseRelativeBandsUpper[i])
         inputs_.append(candles.CloseRelativeBandsLower[i])
+        inputs_.append(candles.CloseRelativeMedia20[i])
         inputs_.append(candles.CloseRelativeBandsSizeDistance[i])
         #-----------------------------------------------------------------------
-
-        #-----------------------------------------------------------------------
-        # Porcetagem do Volume atual em referencia ao anterior
-        #-----------------------------------------------------------------------
-        inputs_.append(candles.PorcentVolumeRefFirst[i])
-        #-----------------------------------------------------------------------
-
 
         #-----------------------------------------------------------------------
         # Parmetros referente ao candles:.values
@@ -363,9 +334,9 @@ def create_inputs_IA(candles, *args):
 
         inputs_.append(candles.pos_or_neg[i])
         
-        inputs_.append(candles.pts_pavio_superior[i])
-        inputs_.append(candles.pts_Body[i])
-        inputs_.append(candles.pts_pavio_inferior[i])
+        # inputs_.append(candles.pts_pavio_superior[i])
+        # inputs_.append(candles.pts_Body[i])
+        # inputs_.append(candles.pts_pavio_inferior[i])
         
         inputs_.append(candles.porcent_pavio_superior[i])
         inputs_.append(candles.porcent_Body[i])
@@ -409,17 +380,17 @@ def inputs_IA(candles, min_size_candle):
         left_index=True, 
         how='outer')
     
-    # -- Calcular a distancia do CloseCandle em relação CloseMedia(9,20,50,200) de cada candle com Peso(weight_porcent) para melhor leitura IA
-    #   - adicionado a CANDLES a coluna:
-    #   -   -:: CloseRelativeMedia9
-    #   -   -:: CloseRelativeMedia20
-    #   -   -:: CloseRelativeMedia50
-    #   -   -:: CloseRelativeMedia200
-    candles = candles.merge(
-        calculete_distance_CloseCandle_CloseMedias_9_20_50_200(candles, weight_porcent),
-        right_index=True, 
-        left_index=True, 
-        how='outer')
+    # # -- Calcular a distancia do CloseCandle em relação CloseMedia(9,20,50,200) de cada candle com Peso(weight_porcent) para melhor leitura IA
+    # #   - adicionado a CANDLES a coluna:
+    # #   -   -:: CloseRelativeMedia9
+    # #   -   -:: CloseRelativeMedia20
+    # #   -   -:: CloseRelativeMedia50
+    # #   -   -:: CloseRelativeMedia200
+    # candles = candles.merge(
+    #     calculete_distance_CloseCandle_CloseMedias_9_20_50_200(candles, weight_porcent),
+    #     right_index=True, 
+    #     left_index=True, 
+    #     how='outer')
 
     # -- Calcular a distancia do CloseCandle em relação CloseBandsBollinger de cada candle com Peso(weight_porcent) para melhor leitura IA
     #   - adicionado a CANDLES a coluna:
@@ -439,12 +410,12 @@ def inputs_IA(candles, min_size_candle):
         left_index=True, 
         how='outer')
 
-    # # -- Porcentagem Volume referente ao anterior
-    candles = candles.merge(
-        calculete_porcentVolumeRefFirst(candles),
-        right_index=True, 
-        left_index=True, 
-        how='outer')
+    # # # -- Porcentagem Volume referente ao anterior
+    # candles = candles.merge(
+    #     calculete_porcentVolumeRefFirst(candles),
+    #     right_index=True, 
+    #     left_index=True, 
+    #     how='outer')
 
 
     return create_inputs_IA(candles, range_total, range_positive, range_negative)
